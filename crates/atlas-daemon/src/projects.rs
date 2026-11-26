@@ -269,9 +269,11 @@ impl ProjectRegistry {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::clock::tests::TestClock;
-    use crate::testing::refusal;
+    use crate::testing::{git, refusal};
 
     fn registry() -> ProjectRegistry {
         let store = Store::in_memory(TestClock::new().clock()).expect("store");
@@ -429,23 +431,17 @@ mod tests {
     async fn adds_a_project_at_the_root_of_its_repository_and_refuses_a_plain_folder() {
         let registry = registry();
         let dir = tempfile::tempdir().expect("dir");
-        let root = dir.path().canonicalize().expect("canonical");
+        let root = dir.path();
         let input = |path: &Path| RepoInput {
             name: "new".into(),
             path: path.to_string_lossy().into_owned(),
             notes: vec!["note".into()],
             ..RepoInput::default()
         };
-        assert!(refusal(registry.add(input(&root)).await).ends_with("n'est pas un dépôt git"));
-        assert!(
-            std::process::Command::new("git")
-                .arg("-C")
-                .arg(&root)
-                .args(["init", "--quiet"])
-                .status()
-                .expect("git")
-                .success()
-        );
+        assert!(refusal(registry.add(input(root)).await).ends_with("n'est pas un dépôt git"));
+        git(root, &["init", "--quiet"]);
+        // As git reports it, which is not how the system spells a temporary folder.
+        let root = PathBuf::from(git(root, &["rev-parse", "--show-toplevel"]));
         std::fs::create_dir(root.join("sub")).expect("sub");
         let added = registry.add(input(&root.join("sub"))).await.expect("added");
         assert_eq!(

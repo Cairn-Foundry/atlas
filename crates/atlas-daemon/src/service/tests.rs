@@ -55,11 +55,9 @@ mod launching_an_agent {
         );
         assert!(agent.owns_worktree);
         assert_eq!(agent.step_id, "qualification");
-        assert!(
-            agent
-                .worktree_path
-                .starts_with(&format!("{}/worktrees/proj-224-", env.home.display()))
-        );
+        let worktree = Path::new(&agent.worktree_path);
+        assert_eq!(worktree.parent(), Some(env.home.join("worktrees").as_path()));
+        assert!(agent.worktree_path.contains("proj-224-"));
         assert_eq!(
             git(Path::new(&agent.worktree_path), &["rev-parse", "--abbrev-ref", "HEAD"]),
             agent.branch

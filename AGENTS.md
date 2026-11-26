@@ -64,6 +64,15 @@ daemon, plus a `cargo check` on Rust 1.89 (the MSRV of the daemon; the shell ask
 
 A single test: `cargo test -p atlas-daemon <name>` or `pnpm test <file>`.
 
+## Releases
+
+A tag `v<version>` builds the release (`.github/workflows/release.yml`): the version is checked
+against `front/package.json` and `crates/Cargo.toml`, then six targets are bundled (AppImage and
+deb for Linux x86_64 and aarch64, a dmg per macOS architecture, an NSIS installer for Windows
+x86_64 and aarch64) and published as a GitHub release whose notes start with the message of the
+tag. `.github/workflows/warm-cache.yml` runs the same compile on `main` so a tag build finds a
+Rust cache: its matrix must stay identical to the one of the release.
+
 ## Never touch the real factory
 
 `pnpm dev`, `pnpm build`, `cargo run -p atlas-daemon` and the application work on the real

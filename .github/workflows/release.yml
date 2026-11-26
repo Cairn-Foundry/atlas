@@ -1,0 +1,208 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build (e.g. v1.0.0)"
+        required: true
+      linux_only:
+        description: "Build the Linux x86_64 target only (cheap pipeline rehearsal)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      notes: ${{ steps.resolve.outputs.notes }}
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve and check version
+        id: resolve
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          PKG=$(node -p "require('./front/package.json').version")
+          CARGO=$(sed -n 's/^version = "\(.*\)"/\1/p' crates/Cargo.toml | head -1)
+          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$CARGO" ]; then
+            echo "version mismatch: tag=$VERSION front/package.json=$PKG crates/Cargo.toml=$CARGO" >&2
+            exit 1
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "notes<<RELEASE_NOTES_EOF"
+            git tag -l --format='%(contents)' "$TAG"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # The daemon ships as a sidecar built for one target at a time, so macOS gets one bundle per
+      # architecture instead of a universal one. The matrix must stay identical to warm-cache.yml.
+      - name: Compose build matrix
+        id: matrix
+        env:
+          LINUX_ONLY: ${{ github.event.inputs.linux_only }}
+        run: |
+          set -euo pipefail
+          FULL='[
+            {"artifact":"bundle-linux-x86_64","runner":"ubuntu-22.04","target":"x86_64-unknown-linux-gnu","bundles":"appimage,deb"},
+            {"artifact":"bundle-linux-aarch64","runner":"ubuntu-22.04-arm","target":"aarch64-unknown-linux-gnu","bundles":"appimage,deb"},
+            {"artifact":"bundle-macos-aarch64","runner":"macos-latest","target":"aarch64-apple-darwin","bundles":"app,dmg"},
+            {"artifact":"bundle-macos-x86_64","runner":"macos-latest","target":"x86_64-apple-darwin","bundles":"app,dmg"},
+            {"artifact":"bundle-windows-x86_64","runner":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis"},
+            {"artifact":"bundle-windows-aarch64","runner":"windows-11-arm","target":"aarch64-pc-windows-msvc","bundles":"nsis"}
+          ]'
+          if [ "${LINUX_ONLY:-}" = "true" ]; then
+            VALUE=$(echo "$FULL" | jq -c '[.[] | select(.artifact == "bundle-linux-x86_64")]')
+          else
+            VALUE=$(echo "$FULL" | jq -c '.')
+          fi
+          echo "value=$VALUE" >> "$GITHUB_OUTPUT"
+          echo "$VALUE"
+
+  build:
+    needs: verify
+    environment: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.verify.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+
+      - name: Install Linux dependencies
+        if: startsWith(matrix.runner, 'ubuntu')
+        uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
+        with:
+          packages: libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev pkg-config patchelf xdg-utils
+          version: 1
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: front/package.json
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: front/pnpm-lock.yaml
+
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: crates
+          shared-key: ${{ matrix.artifact }}
+          cache-on-failure: true
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: front
+
+      - name: Enable Apple signing when the secrets are present
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No Apple certificate configured: the macOS bundle will not be signed."
+            exit 0
+          fi
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY \
+                      APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            eval "value=\${$name}"
+            if [ -z "$value" ]; then
+              echo "$name is empty while APPLE_CERTIFICATE is set: refusing a half-configured signing setup" >&2
+              exit 1
+            fi
+            {
+              echo "$name<<APPLE_ENV_EOF"
+              echo "$value"
+              echo "APPLE_ENV_EOF"
+            } >> "$GITHUB_ENV"
+          done
+
+      # The build command of the shell builds the front, then the daemon for the same target, and
+      # hands it over as the sidecar.
+      - name: Build
+        run: pnpm tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+        working-directory: front
+
+      # An AppImage carries the libraries the app needs, and by inheriting LD_LIBRARY_PATH it
+      # imposes them on every process it launches too. The daemon starts git and Claude Code as
+      # its children, so a bundled libnghttp2 that is older than the host's libcurl breaks them:
+      #   git-remote-https: symbol lookup error: libcurl-gnutls.so.4:
+      #   undefined symbol: nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation
+      # Atlas does not link it itself, so dropping it leaves the host's own copy to answer.
+      - name: Drop libnghttp2 from the AppImage
+        if: startsWith(matrix.runner, 'ubuntu')
+        shell: bash
+        run: .github/scripts/strip-appimage-libs.sh "crates/target/${{ matrix.target }}/release/bundle/appimage"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            crates/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            crates/target/${{ matrix.target }}/release/bundle/nsis/*-setup.exe
+            crates/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+            crates/target/${{ matrix.target }}/release/bundle/deb/*.deb
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: [verify, build]
+    environment: release
+    permissions:
+      contents: write
+    if: ${{ github.event.inputs.linux_only != 'true' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: artifacts
+
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ needs.verify.outputs.tag }}
+          name: ${{ needs.verify.outputs.tag }}
+          body: ${{ needs.verify.outputs.notes }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/bundle-*/**/*.dmg
+            artifacts/bundle-*/**/*-setup.exe
+            artifacts/bundle-*/**/*.AppImage
+            artifacts/bundle-*/**/*.deb

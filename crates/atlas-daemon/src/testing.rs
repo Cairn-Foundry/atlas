@@ -196,10 +196,15 @@ pub(crate) struct Env {
 impl Env {
     pub(crate) fn new() -> Self {
         let root = tempfile::tempdir().expect("root");
-        let base = root.path().canonicalize().expect("canonical root");
-        let (home, repo, claude_dir) = (base.join("home"), base.join("repos/shop"), base.join("claude"));
-        std::fs::create_dir_all(&home).expect("home");
+        let repo = root.path().join("repos").join("shop");
         init_repository(&repo);
+        // Every folder hangs from the path git reports for the repository: links resolved, as the
+        // service compares them, and on Windows the form git writes rather than the verbatim one
+        // `canonicalize` gives and git refuses.
+        let repo = PathBuf::from(git(&repo, &["rev-parse", "--show-toplevel"]));
+        let base = repo.ancestors().nth(2).expect("root").to_path_buf();
+        let (home, claude_dir) = (base.join("home"), base.join("claude"));
+        std::fs::create_dir_all(&home).expect("home");
         let clock = TestClock::new();
         let store = Store::in_memory(clock.clock()).expect("store");
         let terminals = Arc::new(FakeTerminals::default());

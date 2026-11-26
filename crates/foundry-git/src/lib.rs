@@ -346,15 +346,17 @@ mod tests {
         String::from_utf8_lossy(&output.stdout).trim().to_owned()
     }
 
-    /// A repository on `main` with one commit, in a folder whose path is already canonical.
+    /// A repository on `main` with one commit, at the path git reports for it: links resolved, and
+    /// on Windows the form git writes rather than the verbatim one `canonicalize` gives and git refuses.
     fn repository() -> (tempfile::TempDir, PathBuf) {
         let dir = tempfile::tempdir().expect("tempdir");
-        let root = dir.path().canonicalize().expect("canonical").join("repo");
+        let root = dir.path().join("repo");
         std::fs::create_dir(&root).expect("repo dir");
         run(&root, &["init", "--quiet", "--initial-branch=main"]);
         run(&root, &["config", "user.email", "atlas@example.test"]);
         run(&root, &["config", "user.name", "Atlas"]);
         run(&root, &["commit", "--quiet", "--allow-empty", "-m", "init"]);
+        let root = PathBuf::from(run(&root, &["rev-parse", "--show-toplevel"]));
         (dir, root)
     }
 
@@ -663,7 +665,7 @@ mod tests {
 
     #[test]
     fn reads_the_root_and_head_and_answers_none_outside_a_repository() {
-        let (dir, root) = repository();
+        let (_dir, root) = repository();
         assert_eq!(
             repository_root(root.to_str().expect("utf8")),
             Some(root.to_string_lossy().into_owned())
@@ -672,7 +674,7 @@ mod tests {
             head_commit(root.to_str().expect("utf8")),
             Some(run(&root, &["rev-parse", "HEAD"]))
         );
-        let outside = dir.path().canonicalize().expect("canonical");
+        let outside = root.parent().expect("parent");
         assert_eq!(repository_root(outside.to_str().expect("utf8")), None);
         assert!(is_tree_clean(outside.to_str().expect("utf8")));
     }
