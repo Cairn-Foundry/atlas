@@ -1,6 +1,6 @@
 {
   "name": "atlas",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Atlas, by Cairn Foundry - a factory of Claude Code agents, supervised by an orchestrating AI",
   "license": "AGPL-3.0-or-later",
   "private": true,

@@ -209,7 +209,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-daemon"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "atlas-i18n",
@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-desktop"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "atlas-i18n",
  "atlas-link",
@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-i18n"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-link"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "atlas-i18n",
  "dirs 6.0.0",
@@ -1283,7 +1283,7 @@ dependencies = [
 
 [[package]]
 name = "foundry-git"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tempfile",
  "thiserror 2.0.21",
@@ -1291,7 +1291,7 @@ dependencies = [
 
 [[package]]
 name = "foundry-pty"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "portable-pty",
  "thiserror 2.0.21",
