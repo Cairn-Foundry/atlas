@@ -194,9 +194,11 @@ pub fn prepare_workspace(request: &WorkspaceRequest) -> Result<Workspace, Worksp
         base_branch: base_branch.clone(),
         is_created: false,
     };
+    // A folder has one spelling, the one git gives it, whether it was just created or is found
+    // again later: on Windows the path asked for and the one git lists differ by their separators.
     let created = |branch: &str| Workspace {
         repo_root: repo_root.clone(),
-        path: request.new_worktree_path.clone(),
+        path: repository_root(&request.new_worktree_path).unwrap_or_else(|| request.new_worktree_path.clone()),
         branch: branch.to_owned(),
         base_branch: base_branch.clone(),
         is_created: true,
@@ -635,6 +637,7 @@ mod tests {
             ..request(&root, "other")
         };
         assert_eq!(prepare_workspace(&named).expect("named").path, first.path);
+        assert_eq!(repository_root(&first.path), Some(first.path.clone()));
         let foreign = WorkspaceRequest {
             worktree_path: Some("/nowhere".into()),
             ..request(&root, "other")

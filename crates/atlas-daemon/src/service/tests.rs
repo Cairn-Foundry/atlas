@@ -1960,7 +1960,8 @@ mod installing_the_dependencies_of_a_new_worktree {
     #[tokio::test]
     async fn installs_in_the_worktree_atlas_creates_and_makes_the_building_step_wait_for_it() {
         let env = Env::new();
-        with_setup(&env, "sleep 0.4 && pwd").await;
+        // What git prints rather than `pwd`, which under Windows answers in the spelling of its shell.
+        with_setup(&env, "sleep 0.4 && git rev-parse --show-toplevel").await;
         let agent = env.launch(building(&env)).await;
         // Asked at once, the brief says the install is still running.
         assert!(
