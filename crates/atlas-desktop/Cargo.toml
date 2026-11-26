@@ -1,0 +1,34 @@
+[package]
+name = "atlas-desktop"
+description = "Atlas, by Cairn Foundry - desktop client of the agent factory"
+version.workspace = true
+edition.workspace = true
+# Tauri asks for a newer compiler than the daemon and its crates.
+rust-version = "1.90"
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "atlas-desktop"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[lints]
+workspace = true
+
+[dependencies]
+atlas-i18n = { path = "../atlas-i18n" }
+atlas-link = { path = "../atlas-link" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+tauri-plugin-opener = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

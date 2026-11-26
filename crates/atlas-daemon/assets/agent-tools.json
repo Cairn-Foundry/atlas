@@ -1,0 +1,155 @@
+[
+  {
+    "name": "next_step",
+    "description": "Returns the current step of your Atlas workflow: the case file it needs, its instructions and the fields to hand in. To call at the start of the session, after each closed step, and as soon as you doubt what is expected.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "complete_step",
+    "description": "Closes the current step and moves the agent on in its workflow. To call only when the step is done in full and checked: if work remains, go on; if you lack a decision, ask_user; if you cannot move forward, block. next_step lists the fields the step expects in fields.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "description": "The fields the step asks for, by name. They make up the case file handed to the next steps: factual, with paths and commands."
+        },
+        "findingsAboveThreshold": {
+          "description": "Review: number of real findings at the threshold found during the pass. Zero closes the review.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "fields"
+      ]
+    }
+  },
+  {
+    "name": "work_on_branch",
+    "description": "Settles you on a branch that already exists, when your work is about code your folder does not have: the source branch of a merge request to fix, for example. Atlas opens the folder of this branch and restarts your session there.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The existing branch to take over, local or remote."
+        },
+        "baseBranch": {
+          "description": "The branch to compare it with in review: the target branch of the merge request.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "branch"
+      ]
+    }
+  },
+  {
+    "name": "request_repo",
+    "description": "Asks for a working folder in another project, when the work requires changing a second repository. Atlas creates a worktree there on the same branch. Useless for only reading a neighbouring repository.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the project (usually the one of the repository folder)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What you must change there, in one sentence: shown to the master."
+        }
+      },
+      "required": [
+        "repo",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "propose_note",
+    "description": "Proposes to the master to keep a piece of information for all the future agents of this project: what he just taught you and that you should have known (host of an API, install command, access). Does not block your work.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "A sentence that stands on its own, without reference to this work."
+        },
+        "repo": {
+          "description": "Name of the project concerned, if it is not your main project.",
+          "type": "string"
+        },
+        "allProjects": {
+          "description": "True when the information holds for all the master's projects, not only this one.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "note"
+      ]
+    }
+  },
+  {
+    "name": "ask_user",
+    "description": "Tells the master you need him for a decision that is his (question, validation of the plan). He does not see this text in full: then write your complete question in the terminal, end your turn and wait for his answer.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The subject of the request, in one sentence."
+        }
+      },
+      "required": [
+        "question"
+      ]
+    }
+  },
+  {
+    "name": "block",
+    "description": "Reports an obstacle you cannot remove alone (access denied, missing tool, broken environment) after having tried. For a simple question to the master, use ask_user.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The obstacle and the exact error, in one sentence."
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    }
+  }
+]

@@ -1,0 +1,38 @@
+id: tache
+name: Task
+description: >
+  Free work that fits no other brick: data analysis, research, audit, writing. The
+  orchestrator provides the goal and the completion criterion in the master's words, and
+  picks the model. Can be followed by review and ship when it produces code.
+# Picked by the orchestrator at launch: opus for a judgement, sonnet for an execution.
+model: sonnet
+session: tache
+thresholdMinutes: 45
+requires: []
+reads: [note]
+approval: none
+subagents: false
+# Waits for the dependencies Atlas installs in a new worktree.
+needsDependencies: true
+writes:
+  result: "The result, or the path of the file that holds it."
+  method: "What was done to get it, commands included."
+  limits: "What could not be checked, empty list when there is nothing."
+instructions: |
+  Goal: the one the master's note gives, above. The completion criterion is there too.
+
+  To do:
+  - The goal or the completion criterion is ambiguous: ask_user before starting, once.
+  - Ground each conclusion in what you read or measured, and say what you did not check.
+  - The work changed code, a rebase or a conflict resolution included: before closing, run the
+    typecheck, the lint and the tests of the project, keeping only the failures. A failure
+    your work caused gets fixed; a failure that already existed on the base is reported in
+    limits, with the command that shows it.
+
+  Pushing: only if the master's note asks for it. Then push the branch to its remote, with
+  --force-with-lease after a rebase, without asking the master again: the note already gives
+  his agreement. Without that request, push and publish nothing.
+
+  Forbidden: leaving the scope of the note, launching a subagent.
+
+  Done when: the completion criterion of the note is met and checked.

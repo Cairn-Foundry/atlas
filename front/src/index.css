@@ -1,0 +1,574 @@
+/*
+ * Copyright (C) 2026 Benjamin Bonneton and the Cairn Foundry contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #101217;
+  --card: #ffffff;
+  --card-foreground: #101217;
+  --popover: #ffffff;
+  --popover-foreground: #101217;
+  --primary: #101217;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f3f5;
+  --secondary-foreground: #101217;
+  --muted: #f2f3f5;
+  --muted-foreground: #646a74;
+  --accent: #f2f3f5;
+  --accent-foreground: #101217;
+  --destructive: #cc2e2e;
+  --border: #e3e6ea;
+  --input: #e3e6ea;
+  --ring: #2f54eb;
+
+  --board: #f0f2f5;
+  --board-dot: #91919a;
+  --slot: #c2c8d1;
+  --line: #eef0f2;
+  --subtle: #4a5059;
+
+  --status-working: #2f54eb;
+  --status-waiting: #b26b00;
+  --status-waiting-text: #8f5600;
+  --status-waiting-border: #ebd3ac;
+  --status-blocked: #cc2e2e;
+  --status-blocked-text: #b42626;
+  --status-blocked-border: #edb8b8;
+  --status-done: #101217;
+
+  --terminal: #0e1014;
+  --terminal-foreground: #d4d7dd;
+}
+
+/* Dark theme, opted into from the header: the same roles, ink and paper swapped. */
+.dark {
+  --background: #111111;
+  --foreground: #e8e8e8;
+  --card: #1b1b1b;
+  --card-foreground: #e8e8e8;
+  --popover: #1b1b1b;
+  --popover-foreground: #e8e8e8;
+  --primary: #e8e8e8;
+  --primary-foreground: #111111;
+  --secondary: #262626;
+  --secondary-foreground: #e8e8e8;
+  --muted: #262626;
+  --muted-foreground: #9b9b9b;
+  --accent: #262626;
+  --accent-foreground: #e8e8e8;
+  --destructive: #ef5b5b;
+  --border: #333333;
+  --input: #333333;
+  --ring: #6b8afd;
+
+  --board: #0e0e0e;
+  --board-dot: #4a4a4a;
+  --slot: #4d4d4d;
+  --line: #2b2b2b;
+  --subtle: #b5b5b5;
+
+  --status-working: #6b8afd;
+  --status-waiting: #e0a33a;
+  --status-waiting-text: #f0b85a;
+  --status-waiting-border: #5c4520;
+  --status-blocked: #ef5b5b;
+  --status-blocked-text: #ff8080;
+  --status-blocked-border: #5e2a2a;
+  --status-done: #e8e8e8;
+
+  --terminal: #0a0a0a;
+  --terminal-foreground: #d6d6d6;
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-board: var(--board);
+  --color-slot: var(--slot);
+  --color-line: var(--line);
+  --color-subtle: var(--subtle);
+  --color-working: var(--status-working);
+  --color-waiting: var(--status-waiting);
+  --color-waiting-text: var(--status-waiting-text);
+  --color-waiting-border: var(--status-waiting-border);
+  --color-blocked: var(--status-blocked);
+  --color-blocked-text: var(--status-blocked-text);
+  --color-blocked-border: var(--status-blocked-border);
+  --color-done: var(--status-done);
+  --color-terminal: var(--terminal);
+  --color-terminal-foreground: var(--terminal-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role='button'],
+  [role='option'],
+  a[href],
+  summary,
+  label[for],
+  select,
+  input[type='checkbox'],
+  input[type='radio'] {
+    cursor: pointer;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    margin: 0;
+  }
+}
+
+/* Columns are neither draggable nor selectable, so React Flow turns their pointer events off:
+ * inline; the cards inside must still be clickable. */
+.atlas-canvas .react-flow__node {
+  cursor: default;
+  pointer-events: all !important;
+}
+
+.board-dots {
+  background:
+    radial-gradient(circle, var(--board-dot) 0.5px, transparent 0.8px) 0 0 / 20px 20px,
+    var(--board);
+}
+
+@keyframes atlas-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.atlas-breathe {
+  animation: atlas-breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes atlas-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* A light sweep across the word, in ink greys only. */
+.atlas-shimmer {
+  color: var(--muted-foreground);
+  background: linear-gradient(90deg, var(--muted-foreground) 35%, var(--foreground) 50%, var(--muted-foreground) 65%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: atlas-shimmer 1.8s linear infinite;
+}
+
+/* Agent cards. Three decorative layers sit under the text: a field of dots, a border effect and a
+ * sweep played when the status changes. Each status animates them its own way, in its own colour. */
+@property --atlas-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --atlas-ripple {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.atlas-card {
+  --card-tone: var(--status-done);
+  --card-tint: 4%;
+  --card-dots: radial-gradient(circle, var(--card-tone) 0.9px, transparent 1.3px) 4px 4px / 8px 8px;
+  position: relative;
+  background-color: color-mix(in srgb, var(--card-tone) var(--card-tint), var(--card));
+}
+.atlas-card[data-status='working'] {
+  --card-tone: var(--status-working);
+}
+.atlas-card[data-status='working'] {
+  --card-tint: 3%;
+}
+.atlas-card[data-status='waiting'] {
+  --card-tone: var(--status-waiting);
+  --card-tint: 6%;
+}
+.atlas-card[data-status='blocked'] {
+  --card-tone: var(--status-blocked);
+  --card-tint: 6%;
+}
+
+.atlas-card-field,
+.atlas-card-field::before,
+.atlas-card-field::after,
+.atlas-card-beam,
+.atlas-card-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.atlas-card-field {
+  overflow: hidden;
+}
+.atlas-card-field::before,
+.atlas-card-field::after {
+  content: '';
+  background: var(--card-dots);
+  opacity: 0;
+}
+.atlas-card[data-dimmed] :is(.atlas-card-field, .atlas-card-beam, .atlas-card-flash) {
+  display: none;
+}
+
+/* The status just changed: one pass of dots and tint, left to right. */
+.atlas-card-flash {
+  background:
+    var(--card-dots),
+    linear-gradient(color-mix(in srgb, var(--card-tone) 10%, transparent) 0 0);
+  mask-image: linear-gradient(105deg, transparent 30%, #000 50%, transparent 70%);
+  mask-size: 300% 100%;
+  mask-position: 0% 0;
+  animation: atlas-sweep 0.9s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+@keyframes atlas-sweep {
+  from {
+    mask-position: 100% 0;
+  }
+  to {
+    mask-position: 0% 0;
+  }
+}
+
+/* Working: waves of dots cross the card and a beam runs around its border. */
+.atlas-card[data-status='working'] .atlas-card-field::before {
+  opacity: 0.6;
+  mask-image: linear-gradient(110deg, transparent 36%, #000 50%, transparent 64%), linear-gradient(90deg, rgb(0 0 0 / 0.2), #000);
+  mask-size:
+    300% 100%,
+    100% 100%;
+  mask-composite: intersect;
+  animation: atlas-field-sweep 2.8s linear infinite;
+}
+.atlas-card[data-status='working'] .atlas-card-field::after {
+  opacity: 0.22;
+  mask-image: radial-gradient(circle at 100% 0, #000, transparent 62%);
+}
+@keyframes atlas-field-sweep {
+  from {
+    mask-position:
+      100% 0,
+      0 0;
+  }
+  to {
+    mask-position:
+      0% 0,
+      0 0;
+  }
+}
+.atlas-card-beam {
+  inset: -1px;
+}
+.atlas-card[data-status='working'] .atlas-card-beam {
+  padding: 1.5px;
+  background: conic-gradient(from var(--atlas-angle), transparent 0 60%, var(--card-tone) 97%, transparent 100%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: atlas-orbit 3.2s linear infinite;
+}
+@keyframes atlas-orbit {
+  to {
+    --atlas-angle: 360deg;
+  }
+}
+
+/* Waiting: rings of dots ripple out from the glyph, like a radar calling, and the border glows in time. */
+.atlas-card[data-status='waiting'] .atlas-card-field::before,
+.atlas-card[data-status='waiting'] .atlas-card-field::after {
+  mask-image: radial-gradient(
+    circle at 24px 24px,
+    transparent calc(var(--atlas-ripple) - 38px),
+    #000 calc(var(--atlas-ripple) - 6px),
+    transparent var(--atlas-ripple)
+  );
+  animation: atlas-ripple 3.2s cubic-bezier(0.25, 0.5, 0.4, 1) infinite;
+}
+.atlas-card[data-status='waiting'] .atlas-card-field::after {
+  animation-delay: -1.6s;
+}
+@keyframes atlas-ripple {
+  from {
+    --atlas-ripple: 0px;
+    opacity: 0.85;
+  }
+  to {
+    --atlas-ripple: 280px;
+    opacity: 0;
+  }
+}
+.atlas-card[data-status='waiting'] .atlas-card-beam {
+  animation: atlas-halo 3.2s ease-out infinite;
+}
+@keyframes atlas-halo {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--card-tone) 28%, transparent);
+  }
+  60%,
+  to {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+/* Blocked: the dots tear sideways now and then and a scan line falls through the card. */
+.atlas-card[data-status='blocked'] .atlas-card-field::before {
+  opacity: 0.5;
+  mask-image: linear-gradient(90deg, transparent 15%, #000);
+  animation: atlas-glitch 3.6s steps(1) infinite;
+}
+@keyframes atlas-glitch {
+  0%,
+  84%,
+  100% {
+    transform: none;
+    clip-path: none;
+  }
+  86% {
+    transform: translateX(-5px);
+    clip-path: inset(16% 0 54% 0);
+  }
+  89% {
+    transform: translateX(6px);
+    clip-path: inset(58% 0 10% 0);
+  }
+  92% {
+    transform: translateX(-3px);
+    clip-path: inset(34% 0 30% 0);
+  }
+  95% {
+    transform: translateX(3px);
+    clip-path: inset(4% 0 76% 0);
+  }
+}
+.atlas-card[data-status='blocked'] .atlas-card-field::after {
+  opacity: 1;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--card-tone) 13%, transparent) 85%, transparent) 0 0 / 100% 14px no-repeat;
+  animation: atlas-scan 3.6s linear infinite;
+}
+@keyframes atlas-scan {
+  from {
+    background-position: 0 -14px;
+  }
+  55%,
+  to {
+    background-position: 0 126px;
+  }
+}
+
+/* Done: nothing moves, a ground of dots stays in the corner. */
+.atlas-card[data-status='done'] .atlas-card-field::before {
+  opacity: 0.32;
+  mask-image: radial-gradient(circle at 100% 100%, #000, transparent 58%);
+}
+
+/* Wordmark: each letter is drawn stroke by stroke, the dots of the two A pop in, and a blue glint crosses the word every few seconds. */
+.atlas-logo-stroke {
+  stroke-dasharray: 1;
+  animation: atlas-logo-draw 0.75s cubic-bezier(0.6, 0, 0.2, 1) backwards;
+}
+@keyframes atlas-logo-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.atlas-logo-dot {
+  fill: var(--status-working);
+  animation: atlas-logo-pop 0.4s ease-out backwards;
+}
+@keyframes atlas-logo-pop {
+  from {
+    opacity: 0;
+  }
+}
+.atlas-logo-sheen {
+  animation: atlas-logo-sheen 6s cubic-bezier(0.5, 0, 0.3, 1) 1.4s infinite;
+}
+@keyframes atlas-logo-sheen {
+  from {
+    transform: translateX(0);
+  }
+  28%,
+  to {
+    transform: translateX(104px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-breathe,
+  .atlas-card-beam,
+  .atlas-card-field::before,
+  .atlas-card-field::after,
+  .atlas-logo-stroke,
+  .atlas-logo-dot,
+  .atlas-logo-sheen {
+    animation: none !important;
+  }
+  .atlas-shimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+  .atlas-card-flash {
+    display: none;
+  }
+  .atlas-card[data-status='waiting'] .atlas-card-field::before {
+    --atlas-ripple: 110px;
+    opacity: 0.5;
+  }
+  .atlas-card[data-status='working'] .atlas-card-field::before {
+    mask-image: linear-gradient(90deg, transparent 30%, #000);
+    mask-size: 100% 100%;
+    opacity: 0.3;
+  }
+}
+
+/* Orchestrator replies rendered from Markdown: compact, like a chat, no large headings. */
+.atlas-markdown {
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.atlas-markdown > * + * {
+  margin-top: 8px;
+}
+.atlas-markdown p,
+.atlas-markdown ul,
+.atlas-markdown ol,
+.atlas-markdown pre,
+.atlas-markdown table,
+.atlas-markdown h3 {
+  margin-bottom: 0;
+}
+.atlas-markdown h3 {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.atlas-markdown ul,
+.atlas-markdown ol {
+  padding-left: 20px;
+}
+.atlas-markdown ul {
+  list-style: disc;
+}
+.atlas-markdown ol {
+  list-style: decimal;
+}
+.atlas-markdown li + li,
+.atlas-markdown li > ul,
+.atlas-markdown li > ol {
+  margin-top: 4px;
+}
+.atlas-markdown strong {
+  font-weight: 600;
+}
+.atlas-markdown a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--border);
+}
+.atlas-markdown a:hover {
+  text-decoration-color: currentColor;
+}
+.atlas-markdown code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  border-radius: 4px;
+  background: var(--secondary);
+  padding: 1px 4px;
+}
+.atlas-markdown pre {
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--secondary);
+  padding: 10px 12px;
+  line-height: 19px;
+}
+.atlas-markdown pre code {
+  padding: 0;
+  background: none;
+}
+.atlas-markdown table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.atlas-markdown th,
+.atlas-markdown td {
+  border-bottom: 1px solid var(--line);
+  padding: 4px 10px 4px 0;
+  text-align: left;
+}
+.atlas-markdown th {
+  font-weight: 600;
+}
+
+/* An agent's report: the same Markdown, given room to be read as a page. */
+.atlas-report .atlas-markdown {
+  font-size: 15px;
+  line-height: 24px;
+}
+.atlas-report .atlas-markdown > * + * {
+  margin-top: 12px;
+}
+.atlas-report .atlas-markdown h3 {
+  margin-top: 28px;
+  font-size: 17px;
+}
+.atlas-report .atlas-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}

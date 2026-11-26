@@ -1,0 +1,35 @@
+id: rapport
+name: Report
+description: >
+  Writes the rendering meant for the master, shown as Markdown in Atlas without reopening the
+  session: conclusions of a review, result of an analysis or of a task. Goes after the step it
+  reports on, at the end of the workflow. Useless when the work comes down to a merge request.
+model: haiku
+session: rapport
+thresholdMinutes: 10
+requires: []
+reads: [note, qualification, plan, implementation, correction, review, review-mr, tache, ship]
+approval: none
+subagents: false
+writes:
+  report: "The full rendering in Markdown, as the master will read it."
+instructions: |
+  Goal: hand the master a rendering he reads on its own, without opening the terminal or the
+  case file.
+
+  Your material is the case file above. It falls short on a point: read the file or the merge
+  request it cites, without redoing the work.
+
+  Shape of the report, in Markdown:
+  - Start with the conclusion in two or three lines: what was found or done.
+  - Then one section per subject, titles in ###, short lists, tables to compare.
+  - A review: a table of the findings (severity, file:line, problem), from the most to the
+    least severe, then the false positives set aside.
+  - An analysis: the observations, each with its source, then what remains to be checked.
+  - End with the useful links (merge request, files produced) and the possible next steps.
+
+  Forbidden: changing a file, running the build or the tests, inventing what the case file
+  does not say.
+
+  Done when: the report reads on its own and each statement comes from the case file or from a
+  cited source.

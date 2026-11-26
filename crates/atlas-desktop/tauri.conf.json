@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Atlas",
+  "identifier": "com.bonneton-dev.cairn-foundry.atlas",
+  "build": {
+    "beforeDevCommand": {
+      "script": "node scripts/prepare-sidecar.mjs && pnpm web:dev",
+      "cwd": "../../front"
+    },
+    "beforeBuildCommand": {
+      "script": "pnpm web:build && node scripts/prepare-sidecar.mjs --release",
+      "cwd": "../../front"
+    },
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../front/dist"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost http://127.0.0.1:* ws://127.0.0.1:*; object-src 'none'; base-uri 'self'; form-action 'none'",
+      "devCsp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: ipc: http://ipc.localhost http://localhost:5173 ws://localhost:5173 http://127.0.0.1:* ws://127.0.0.1:*"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "DeveloperTool",
+    "publisher": "Cairn Foundry",
+    "copyright": "Copyright (C) 2026 Benjamin Bonneton and the Cairn Foundry contributors",
+    "license": "AGPL-3.0-or-later",
+    "shortDescription": "Supervisor of Claude Code agents",
+    "longDescription": "Atlas supervises Claude Code agents: it launches them in git worktrees, follows their steps and warns you when one of them needs you.",
+    "icon": [
+      "icons/icon.png",
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/atlas-daemon"
+    ],
+    "linux": {
+      "deb": {
+        "depends": [
+          "git",
+          "libayatana-appindicator3-1"
+        ],
+        "recommends": [
+          "libnotify-bin"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "git",
+          "libayatana-appindicator-gtk3"
+        ],
+        "recommends": [
+          "libnotify"
+        ]
+      }
+    }
+  }
+}

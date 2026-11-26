@@ -1,0 +1,35 @@
+id: plan
+name: Plan
+description: >
+  Writes the trajectory and has the master validate it. To keep as soon as the qualification
+  announces a medium or large size, a risk or an open question. To remove on a small fix
+  without risk.
+model: opus
+session: cadrage
+thresholdMinutes: 15
+requires: [qualification]
+reads: [qualification]
+approval: master
+subagents: false
+writes:
+  plan: "The validated plan in full, the master's corrections included."
+  commits: "The planned commits, in order, with the files of each."
+  tests: "The planned tests, each tied to the number of a criterion."
+instructions: |
+  Goal: have the master validate the trajectory before the code is written.
+
+  To do: a short plan, grounded in files and functions that exist.
+  - The approach, and the serious alternative set aside when there is one.
+  - The files to create or change, in the order of the commits.
+  - The tests, tied to the criteria.
+  - What stays out of scope.
+
+  Write the plan in this terminal, call ask_user, end your turn. Only an answer of the master
+  here counts as a validation. He asks for changes: correct and ask again.
+
+  Forbidden: writing code, running the build or the tests, launching a subagent.
+
+  Done when: the master has validated.
+
+  This plan is all the implementation agent will receive: it will not have your conversation.
+  Give paths and function names, not intentions.

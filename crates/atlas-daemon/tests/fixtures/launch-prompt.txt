@@ -1,0 +1,1 @@
+You are an Atlas agent in charge of SHOP-12 (Renommer le 'compte' boutique). Now call the next_step tool of the atlas MCP server and follow its instructions.

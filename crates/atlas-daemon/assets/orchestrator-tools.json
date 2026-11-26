@@ -1,0 +1,590 @@
+[
+  {
+    "name": "add_repo_note",
+    "description": "Adds a line to the memory of a project, or of all the projects (present and future) when repo is absent: what the future agents must know. Each session reads it again, so a short sentence.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "description": "Name of the project. Absent: the note holds for all the projects.",
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "A sentence that stands on its own."
+        }
+      },
+      "required": [
+        "note"
+      ]
+    }
+  },
+  {
+    "name": "set_repo_notes",
+    "description": "Rewrites the whole memory of a project, or the notes common to all when repo is absent, to correct, group or remove notes. list_repos gives the current notes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        }
+      },
+      "required": [
+        "notes"
+      ]
+    }
+  },
+  {
+    "name": "set_repo_setup",
+    "description": "Records the command that installs the dependencies of a project (for example \"npm ci --prefer-offline\"). Atlas runs it in each new worktree of the project, while the agent qualifies; the steps that build wait for it to end. Without command: removes it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the project."
+        },
+        "command": {
+          "description": "Shell command run at the root of the worktree, on one line.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "repo"
+      ]
+    }
+  },
+  {
+    "name": "list_repos",
+    "description": "Projects (git repositories) in which an agent can be launched, with their ticket prefixes and their memory (notes).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "add_repo",
+    "description": "Adds or updates a project: a local git repository in which to launch agents. The path must be a git repository.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short name of the project, for example cairn."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Absolute path of the repository on the master's machine."
+        },
+        "ticketPrefixes": {
+          "description": "Ticket prefixes of this project, for example [\"CAIRN\"].",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "baseBranch": {
+          "description": "Branch the work starts from, for example main. Absent: the current branch of the repository.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path"
+      ]
+    }
+  },
+  {
+    "name": "remove_repo",
+    "description": "Removes a project from the list. The existing agents and worktrees are not touched.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  },
+  {
+    "name": "list_agents",
+    "description": "The agents of the board, one line each: reference, project, status and workflow (current step in brackets).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_agent",
+    "description": "Detail of an agent: its workflow with duration and tokens per step, its note and the history of its sessions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId"
+      ]
+    }
+  },
+  {
+    "name": "launch_agent",
+    "description": "Launches an agent with the workflow you compose. The project is found by the prefix of the ticket; give repo when no prefix matches. Without branch, worktreePath or inPlace, the agent works on a new branch in a new worktree.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "ticketRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference of the ticket, for example CAIRN-123: it names the branch and the commits. A short name only for a work without code."
+        },
+        "steps": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The workflow: ids of bricks of the catalogue, in order."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this workflow, in one sentence: shown to the master in the chat."
+        },
+        "startAt": {
+          "description": "Brick where the agent starts; the ones before are marked done outside Atlas.",
+          "type": "string"
+        },
+        "repo": {
+          "description": "Name of the project, taken from list_repos, if the prefix is not enough.",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "note": {
+          "description": "Ideas, instructions and links of the master for the agent, in his words.",
+          "type": "string"
+        },
+        "branchType": {
+          "description": "New branch: fix to correct a behaviour, feat to add one, otherwise chore, docs or refactor.",
+          "type": "string"
+        },
+        "branchName": {
+          "description": "New branch: two to four words in camelCase, for example renameShopAccount.",
+          "type": "string"
+        },
+        "branch": {
+          "description": "Existing branch to work on, local or remote.",
+          "type": "string"
+        },
+        "worktreePath": {
+          "description": "Existing worktree to work in.",
+          "type": "string"
+        },
+        "inPlace": {
+          "description": "Work in the main folder of the project. Only if the master explicitly asks for it.",
+          "type": "boolean"
+        },
+        "taskModel": {
+          "description": "Model of the tache brick: opus or sonnet.",
+          "type": "string"
+        },
+        "mrUrl": {
+          "description": "Link of the merge request to review.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticketRef",
+        "steps",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "approve_step",
+    "description": "Gives your decision on the step an agent handed you for validation. approved false sends it back to the agent. steps replaces the steps that remain, for example to remove the plan.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "approved": {
+          "default": true,
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The reason, in one sentence: shown to the master. When sending back, what is missing."
+        },
+        "steps": {
+          "description": "The bricks that remain after this step, in order. Absent: workflow unchanged.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "agentId",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "set_workflow",
+    "description": "Replaces the steps an agent has not started yet. The history and the current step do not change.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The bricks that remain, in order."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why, in one sentence: shown to the master."
+        }
+      },
+      "required": [
+        "agentId",
+        "steps",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "stop_agent",
+    "description": "Stops an agent where it stands: its session closes, it stays on the board, blocked, and resume_agent starts it again.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why, in one sentence: shown on the agent."
+        }
+      },
+      "required": [
+        "agentId",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "jump_to_step",
+    "description": "Gives up the current step of an agent (kept in the history as skipped) and makes it go on, in a new session, with the bricks given. For example [\"ship\"] when the master wants to deliver without waiting for the end of a review.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "steps": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The bricks that remain, in order, from now on."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why, in one sentence: shown to the master."
+        }
+      },
+      "required": [
+        "agentId",
+        "steps",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "archive_agent",
+    "description": "Removes a finished or abandoned agent from the board. Its session closes; its branch and its folder stay.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId"
+      ]
+    }
+  },
+  {
+    "name": "resume_agent",
+    "description": "Reopens the session of an agent where it stopped (--resume), possibly with an instruction.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId"
+      ]
+    }
+  },
+  {
+    "name": "restart_agent",
+    "description": "Closes the session of an agent and opens a new one on the same step, fed by its case file.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId"
+      ]
+    }
+  },
+  {
+    "name": "read_agent_terminal",
+    "description": "What the open session of an agent shows: the end of its screen and the command that started it. To read before saying that an agent works, waits or is blocked: its status in Atlas does not say what its session is doing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "lines": {
+          "default": 40,
+          "description": "Number of lines from the end of the screen.",
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "agentId"
+      ]
+    }
+  },
+  {
+    "name": "send_to_agent",
+    "description": "Writes a message in the session of an agent, as if the master typed it: an instruction, a piece of information learnt since its launch. Agent busy: the message waits for the end of its turn. Session closed: it reopens with this message.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The message, which stands on its own."
+        }
+      },
+      "required": [
+        "agentId",
+        "text"
+      ]
+    }
+  },
+  {
+    "name": "propose_catalogue_change",
+    "description": "Proposes to the master a change of his catalogue (~/.atlas): adding or replacing a brick, installing a skill or a subagent, disabling or enabling a brick again. Atlas checks the change, shows it to the master in a card and only applies it if he validates it. One proposal per item; a brick is never deleted, it is disabled.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "change": {
+          "oneOf": [
+            {
+              "type": "object",
+              "description": "Writes bricks/<id>.yml, a new brick or a new version. content is the whole YAML file, valid for bricks/brick.schema.json.",
+              "properties": {
+                "type": {
+                  "const": "brick"
+                },
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "type",
+                "id",
+                "content"
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Writes the whole skills/<name>/ folder. files maps each path relative to the folder (SKILL.md required, subfolders with /) to its text content.",
+              "properties": {
+                "type": {
+                  "const": "skill"
+                },
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "files": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "name",
+                "files"
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Writes subagents/<name>.md, the definition of a Claude Code subagent.",
+              "properties": {
+                "type": {
+                  "const": "subagent"
+                },
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "type",
+                "name",
+                "content"
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Takes a brick out of service without deleting it.",
+              "properties": {
+                "type": {
+                  "const": "disable"
+                },
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                }
+              },
+              "required": [
+                "type",
+                "id"
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Puts a disabled brick back in service.",
+              "properties": {
+                "type": {
+                  "const": "enable"
+                },
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                }
+              },
+              "required": [
+                "type",
+                "id"
+              ]
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One factual sentence: why this change, where it comes from."
+        }
+      },
+      "required": [
+        "change",
+        "reason"
+      ]
+    }
+  },
+  {
+    "name": "notify_master",
+    "description": "Warns the master (Atlas chat and system notification). Warn, do not relay: do not sum up the question of an agent.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  {
+    "name": "broadcast",
+    "description": "Broadcasts a message of the master to all the active agents.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  }
+]

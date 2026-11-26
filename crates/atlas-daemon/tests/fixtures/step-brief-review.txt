@@ -1,0 +1,45 @@
+Step: Review
+Workflow: Qualification (done) > Plan (done outside Atlas) > Review (done) > Correction (done) > [Review] > Ship
+Other working folder (project web): /wt/shop-12-web, branch fix/SHOP-12/renameShopAccount (base develop)
+Merge request: https://forge.test/mr/4
+Review pass 2 of 3, threshold: critical, high, medium
+
+Case file:
+## Note of the master
+Garder l'ancien nom en alias.
+## Qualification
+need: Renommer le compte
+boutique
+size: petit
+## Plan
+Done outside Atlas: its result is to be read where it is, according to the note of the master (the merge request, its comments, the code).
+## Review
+findings: un finding
+criteria: couverts
+dropped: aucun
+
+Instructions:
+You are a fresh reviewer: you did not write this code. The deep-review report is above in
+this conversation.
+
+To do:
+1. Pass 1: for each acceptance criterion of the case file, look for the code that carries it
+   out and the test that checks it. A criterion without one or the other is a critical
+   finding.
+2. Passes 2 and 3: for each finding of the previous pass (review section of the case file),
+   check that it is closed. A finding left open counts again.
+3. Count the findings at the threshold, uncovered criteria included, and give this number in
+   findingsAboveThreshold. Announcing zero while some remain lets an incomplete work go out.
+
+Forbidden: changing a file, running the build or the tests, reviewing outside the range
+given to passes 2 and 3.
+
+Done when: each finding has its severity, its location and its scenario.
+
+To hand in through fields of complete_step, once the step is done and checked:
+- findings: Each real finding: severity, file and line, scenario that triggers it.
+- criteria: For each acceptance criterion: covered or not, with the code and the test.
+- dropped: False positives set aside and their reason.
+- and findingsAboveThreshold: the number of findings at the threshold.
+
+The master reads French: write to him in French (what you say in this terminal, your questions, a plan or a report he reads). Code, commits and merge requests follow the conventions of the repository.

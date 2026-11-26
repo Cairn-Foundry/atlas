@@ -1,0 +1,28 @@
+[workspace]
+resolver = "3"
+members = ["atlas-daemon", "atlas-desktop", "atlas-i18n", "atlas-link", "foundry-git", "foundry-pty"]
+# The desktop shell needs the system webview libraries: it is built on request, not by default.
+default-members = ["atlas-daemon", "atlas-i18n", "atlas-link", "foundry-git", "foundry-pty"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+license = "AGPL-3.0-or-later"
+authors = ["Benjamin Bonneton"]
+# Nothing here is meant for crates.io yet: a crate opts in when it is.
+publish = false
+
+[workspace.lints.rust]
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[workspace.dependencies]
+thiserror = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = "symbols"

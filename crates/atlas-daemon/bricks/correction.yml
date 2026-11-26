@@ -1,0 +1,45 @@
+id: correction
+name: Correction
+description: >
+  Fixes the findings at the threshold that a review returned. Inserted by the daemon after a
+  review that found some, or added by the orchestrator when the master asks to fix the
+  feedback of an MR.
+model: sonnet
+session: build
+# A fresh session for each correction: resuming the build one would reread its whole history on
+# every turn. The file and the findings are enough to fix them.
+freshSession: true
+thresholdMinutes: 30
+requires: [review, review-mr]
+reads: [qualification, implementation, review, review-mr]
+approval: none
+subagents: false
+# Waits for the dependencies Atlas installs in a new worktree.
+needsDependencies: true
+# The step only closes with everything committed: later steps read commits.
+requiresCleanTree: true
+writes:
+  fixed: "Each finding fixed, with the commit and the test that would have caught it."
+  refused: "Findings not fixed and the precise reason, empty list when there are none."
+  checks: "The commands run and their result."
+instructions: |
+  Goal: close, at its root, each finding of the review section of the case file. Without a
+  review section, the feedback to handle is the one the master's note points to: read it at
+  its source (the comments of the merge request) before touching the code.
+
+  To do:
+  - Read the code of each finding again before fixing it. It looks wrong to you: do not fix
+    it, write why in refused, the next reviewer will decide.
+  - A finding that only closes with a decision of the master (choice of approach, secret or
+    access to create, trade-off on the need): ask_user right away, with the options and your
+    recommendation. Do not leave it in refused: the next pass would find it still open and
+    the review loop would turn for nothing.
+  - A test that would have caught the finding, when possible. Atomic commits, with the
+    ticket reference of the case file: the next reviewer will read these commits only.
+  - Before closing: build, typecheck, lint, and the tests of the files touched.
+
+  Forbidden: fixing anything but the findings, running the full suite, launching a subagent.
+
+  Done when: each finding is fixed or refused with its reason, and everything is committed.
+
+  Your fixes will be read by a fresh reviewer, on your commits alone.

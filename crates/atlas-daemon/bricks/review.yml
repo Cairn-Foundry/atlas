@@ -1,0 +1,54 @@
+id: review
+name: Review
+description: >
+  Review of the work by a fresh agent, with the deep-review skill. Returns a report, fixes
+  nothing. Also checks that each acceptance criterion is covered. To put before any ship of
+  changed code. The findings at the threshold trigger a correction then a new pass, limited to
+  the correction commits.
+model: opus
+session: review
+thresholdMinutes: 25
+requires: []
+reads: [qualification, plan, review]
+approval: none
+# deep-review launches minos agents by itself past 400 changed lines. Both ship with Atlas,
+# in ~/.atlas/skills and ~/.atlas/subagents.
+subagents: true
+skills: [deep-review]
+subagentTypes: [minos]
+maxPasses: 3
+# Passes 2 and 3 reread only the fix commits, with the same skill.
+laterPassModel: sonnet
+failOn: [critical, high, medium]
+# Brick that fixes the findings: the daemon alternates it with the later passes.
+fixedBy: correction
+# The session starts with this command, as if the master had typed it.
+# Pass 1: the whole branch. Passes 2 and 3: the range of the fix commits.
+# Everything the reviewer must know before starting is in this command.
+command: >
+  /deep-review {range} of the repository {worktree}, base {base}.
+  Work: {need}. focus: findings {failOn}.
+  Atlas instructions: report only, change no file; run no build, no tests and no lint, they
+  already ran. {repos} {passNote}
+  Once the report is done, call next_step of the atlas MCP server then complete_step.
+writes:
+  findings: "Each real finding: severity, file and line, scenario that triggers it."
+  criteria: "For each acceptance criterion: covered or not, with the code and the test."
+  dropped: "False positives set aside and their reason."
+instructions: |
+  You are a fresh reviewer: you did not write this code. The deep-review report is above in
+  this conversation.
+
+  To do:
+  1. Pass 1: for each acceptance criterion of the case file, look for the code that carries it
+     out and the test that checks it. A criterion without one or the other is a critical
+     finding.
+  2. Passes 2 and 3: for each finding of the previous pass (review section of the case file),
+     check that it is closed. A finding left open counts again.
+  3. Count the findings at the threshold, uncovered criteria included, and give this number in
+     findingsAboveThreshold. Announcing zero while some remain lets an incomplete work go out.
+
+  Forbidden: changing a file, running the build or the tests, reviewing outside the range
+  given to passes 2 and 3.
+
+  Done when: each finding has its severity, its location and its scenario.

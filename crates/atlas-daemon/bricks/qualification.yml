@@ -1,0 +1,49 @@
+id: qualification
+name: Qualification
+description: >
+  Reads the ticket and the code, sets the acceptance criteria and estimates the size of the
+  work. To put at the head of any work that starts from a ticket or from a request to
+  clarify. Useless when the work is already defined (review of an existing MR).
+model: sonnet
+session: cadrage
+thresholdMinutes: 15
+requires: []
+reads: [note]
+approval: orchestrator
+subagents: false
+# Fields complete_step requires for this brick: they make up its section of the file.
+writes:
+  need: "The need restated, in three sentences at most."
+  ticket: "The ticket reference to put in the commits and the MR, none when there is none."
+  criteria: "Numbered acceptance criteria, each one checkable by a test or by reading."
+  files: "Files and functions concerned, with their path."
+  approach: "The approach chosen, in five lines at most."
+  size: "small, medium or large."
+  risks: "Risks noticed, empty list when there are none."
+  questions: "Questions left open for the master, empty list when there are none."
+instructions: |
+  Goal: know exactly what to build, where, and how it will be checked that it is done.
+
+  To do:
+  1. Read the whole ticket with the MCP server of the forge: description, criteria, comments,
+     linked tickets. Unreadable: call block, do not guess.
+  2. Find in the code the files and functions concerned and the conventions of the
+     repository. Check that the need is not already covered.
+  3. Write the acceptance criteria. The ticket gives none: propose them.
+  4. Decide yourself what the ticket or the code decides. The rest is a question.
+  5. The ticket reference is the one of the launch, given at the head of your session: take
+     it as it is, even if it looks like an example. It is a question for the master only when
+     the launch gave a name in words, without a reference.
+  6. Estimate the size. Small: one or two files, no design choice, no risk. Large: several
+     modules, a migration, or a contract that changes. Medium: the rest.
+
+  Forbidden: writing code, running the build or the tests, launching a subagent.
+
+  If questions remain for the master: ask_user once, all numbered, each with your default
+  answer. Then wait.
+
+  Done when: you can fill each field without assuming anything.
+
+  The rest of the workflow may change after this step: the orchestrator reads your estimate
+  and decides whether a plan validated by the master is needed. Call next_step again to learn
+  what comes next.

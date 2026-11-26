@@ -1,0 +1,39 @@
+id: tests
+name: Tests
+description: >
+  Runs the full suite once and checks that the tests protect the changed code. To put after
+  any brick that changed code, before the review. Can be put again after a correction that
+  touched many files.
+model: sonnet
+session: build
+thresholdMinutes: 20
+requires: [implementation, correction]
+reads: [qualification]
+approval: none
+subagents: false
+# Waits for the dependencies Atlas installs in a new worktree.
+needsDependencies: true
+# The step only closes with everything committed: later steps read commits.
+requiresCleanTree: true
+writes:
+  command: "The command of the full suite."
+  result: "Number of tests, passed, failed."
+  added: "Tests added during this step and the criterion each one protects."
+  uncovered: "What stays uncovered and why, empty list when there is nothing."
+instructions: |
+  Goal: the full suite passes, and a test would fail if a criterion broke.
+
+  This is the only step that runs the full suite. Run it once at the start, with the command
+  of the project, keeping only the failures in the output.
+
+  To do:
+  - For each criterion, name the test that would fail if the behaviour broke.
+  - Complete what is missing: edge cases, invalid inputs, error paths.
+  - A test reveals a bug: fix the code, not the test.
+  - You changed something: run only the tests concerned again, then the full suite one last
+    time.
+
+  Forbidden: disabling a flaky test, running the full suite again without having changed
+  anything, launching a subagent.
+
+  Done when: the full suite passes and everything is committed.

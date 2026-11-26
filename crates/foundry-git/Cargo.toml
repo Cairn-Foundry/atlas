@@ -1,0 +1,18 @@
+[package]
+name = "foundry-git"
+description = "Git working folders for the Cairn Foundry suite: worktrees found or created for a piece of work"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3"

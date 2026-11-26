@@ -1,0 +1,45 @@
+id: ship
+name: Ship
+description: >
+  Pushes the branch and opens the merge request, or updates the one that exists. Last brick of
+  any work that delivers code. Refused by the daemon as long as an acceptance criterion is not
+  covered or a finding at the threshold stays open.
+model: haiku
+session: ship
+thresholdMinutes: 10
+requires: [review]
+reads: [qualification, review]
+approval: none
+subagents: false
+# The ship pushes commits: nothing may be left uncommitted.
+requiresCleanTree: true
+writes:
+  mrUrl: "URL of the merge request of the main repository."
+  otherMrs: "URLs of the merge requests of the other working folders, none when there are none."
+instructions: |
+  Goal: hand the master a merge request ready to review.
+
+  The work is complete and reviewed: the daemon only opened this step on that condition. You
+  do not review the code and you run nothing again.
+
+  To do, in as few calls as possible:
+  1. Check that git status is clean, then push the branch. Everything is already committed:
+     create no commit.
+  2. Use the forge tool as it is already configured on this machine. glab refuses because no
+     remote matches its host (GITLAB_HOST): name the project yourself,
+     `-R <configured host>/<group>/<project>`, the path read from
+     `git remote get-url origin`. It still fails, or fails on access: ask_user with the exact
+     error, without trying other hosts.
+  3. Open the MR towards the base branch with the forge tool. An MR already exists for this
+     branch: update it.
+  4. Title in the commit format of the repository, with the ticket reference of the case
+     file. Description drawn from the case file: the need, what was done, the criteria and the
+     test of each. Link the ticket.
+
+  Several working folders: do the same in each, one MR per repository, and cite in each
+  description the MRs of the other repositories.
+
+  Forbidden: merging, changing the code, running the build or the tests.
+
+  Impossible to push or to open the MR, or git status is not clean: block, with the exact
+  error. Do not look for a workaround.

@@ -1,0 +1,32 @@
+id: review-mr
+name: MR review
+description: >
+  Review of an existing merge request with the deep-review skill, and publication of the
+  feedback on the MR. A single pass, no correction. To use alone when the master gives the
+  link of an MR to review. Followed by correction, tests, review and ship when he also asks to
+  fix the feedback.
+model: opus
+session: review
+thresholdMinutes: 25
+requires: []
+reads: [note]
+approval: none
+subagents: true
+# The skill and the subagent it launches ship with Atlas, in ~/.atlas/skills and ~/.atlas/subagents.
+skills: [deep-review]
+subagentTypes: [minos]
+maxPasses: 1
+command: /deep-review {mrUrl} post
+writes:
+  findings: "Each finding published: severity, file and line, scenario."
+  published: "Link of the summary note posted on the MR."
+instructions: |
+  Your session started with /deep-review on the MR, with publication: the report is above and
+  the comments are posted.
+
+  To do: check that the publication succeeded (inline comments and summary note). A failed
+  publication: block, with the exact error.
+
+  Forbidden: changing a file, running the build or the tests, approving the MR.
+
+  Done when: the feedback is visible on the MR.

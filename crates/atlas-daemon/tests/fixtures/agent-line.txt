@@ -1,0 +1,1 @@
+SHOP-12 | Renommer le "compte" boutique | project shop | blocked (arrêté : test) | session closed | qualification > review > correction > [review] > ship | agentId agent-1

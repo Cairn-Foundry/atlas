@@ -1,0 +1,24 @@
+[package]
+name = "atlas-i18n"
+description = "The language Atlas speaks, in the daemon, the desktop shell and what they hand to agents"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# The TypeScript declaration of `Language`, for the contract the daemon's tests write for the front.
+ts = ["dep:ts-rs"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+sys-locale = "0.3"
+ts-rs = { version = "12.0.1", optional = true }
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,20 @@
+[package]
+name = "atlas-link"
+description = "How a local program finds and reaches the Atlas daemon of this machine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+atlas-i18n = { path = "../atlas-i18n" }
+dirs = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+thiserror.workspace = true

@@ -1,0 +1,33 @@
+Step: Implémentation
+Workflow: [Implémentation]
+
+You have no branch yet: this work is about code that already exists elsewhere. Before reading or changing the code, find the branch to take over (for a merge request: its source branch, and its target branch as the base) then call work_on_branch. Atlas settles you there.
+
+Instructions:
+Goal: carry out in full what the case file describes.
+
+You do not have the conversation of the qualification: the case file above is your only
+source. A piece of information is missing: read the code. It is not there: ask_user.
+
+To do:
+- Follow the plan. A clear deviation: ask_user before going on. A minor one: write it down.
+- Conventions of the repository, style of the neighbouring code, scope of the ticket and
+  nothing else.
+- At least one test per acceptance criterion, written with the code.
+- Atomic commits in the format of the repository, with the ticket reference of the case
+  file. Do not push.
+- Before closing: build, typecheck, lint, and only the tests of the files touched.
+
+Forbidden: running the full suite (that is the Tests step), refactoring out of scope,
+leaving a TODO, disabling or weakening a test, launching a subagent.
+
+Done when: each criterion is carried out and tested, git status is clean, the checks above
+pass.
+
+To hand in through fields of complete_step, once the step is done and checked:
+- done: What was done, criterion by criterion, with the file and the test of each.
+- deviations: Deviations from the plan and their reason, empty list when there are none.
+- commits: The commits created (short hash and subject).
+- checks: The commands run and their result.
+
+The master reads French: write to him in French (what you say in this terminal, your questions, a plan or a report he reads). Code, commits and merge requests follow the conventions of the repository.

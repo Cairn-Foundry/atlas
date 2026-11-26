@@ -1,0 +1,17 @@
+[package]
+name = "foundry-pty"
+description = "Pseudo-terminal sessions for the Cairn Foundry suite: a process on a PTY and a mirror of its screen"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+portable-pty = "0.9"
+thiserror.workspace = true
+vt100 = "0.18"

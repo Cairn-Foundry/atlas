@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.playwright-mcp/
+target/
+crates/atlas-desktop/gen/
+crates/atlas-desktop/binaries/
+.cargo/
+.pnpm-store/
+.claude/worktrees/
+.claude/agent-memory/
