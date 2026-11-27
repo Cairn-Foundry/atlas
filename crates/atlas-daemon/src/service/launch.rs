@@ -80,10 +80,13 @@ impl AgentService {
         let in_place = input.in_place.unwrap_or(false);
         let request = WorkspaceRequest {
             repo_path: repo.path.clone(),
-            base_branch: repo.base_branch.clone(),
+            base_branch: input.base_branch.clone().or_else(|| repo.base_branch.clone()),
             new_worktree_path: self.new_worktree_path(&[&input.ticket_ref])?,
             new_branch: self.new_branch_name(&input),
             branch: input.branch.clone(),
+            // A base named at launch says where a branch found nowhere starts: the master chose
+            // its name, often the same across several repositories.
+            create_missing_branch: input.base_branch.is_some(),
             worktree_path: input.worktree_path.clone(),
             in_place,
             // Work that never commits (a review, an analysis) gets a folder, not a branch of its own.

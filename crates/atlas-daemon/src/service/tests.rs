@@ -209,6 +209,31 @@ mod launching_an_agent {
     }
 
     #[tokio::test]
+    async fn creates_a_branch_found_nowhere_only_when_the_launch_names_its_base() {
+        let env = Env::new();
+        git(&env.repo, &["branch", "develop"]);
+        let shared = || CreateAgentInput {
+            branch: Some("feat/pack-traveler".to_owned()),
+            ..env.launch_input()
+        };
+        assert_eq!(
+            refusal(env.service.launch(shared()).await),
+            "préparation du dossier de travail impossible : la branche feat/pack-traveler n'existe ni dans le dépôt ni sur origin"
+        );
+
+        let agent = env
+            .launch(CreateAgentInput {
+                base_branch: Some("develop".to_owned()),
+                ..shared()
+            })
+            .await;
+        assert_eq!(
+            (agent.branch.as_str(), agent.base_branch.as_str(), agent.owns_worktree),
+            ("feat/pack-traveler", "develop", true)
+        );
+    }
+
+    #[tokio::test]
     async fn never_puts_two_active_agents_in_the_same_folder() {
         let env = Env::new();
         let in_place = || CreateAgentInput {

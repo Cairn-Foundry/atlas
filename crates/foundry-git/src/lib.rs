@@ -106,6 +106,9 @@ pub struct WorkspaceRequest {
     pub new_branch: String,
     /// Existing branch to work on, local or only on the remote.
     pub branch: Option<String>,
+    /// `branch` is created from the base when it exists nowhere, instead of being refused: for a
+    /// name the master chose, shared by several repositories.
+    pub create_missing_branch: bool,
     /// Existing worktree to work in.
     pub worktree_path: Option<String>,
     /// Work in the main working tree of the repository.
@@ -153,7 +156,8 @@ fn absolute(path: &str) -> PathBuf {
 /// - `in_place`: the main working tree, on the branch checked out there;
 /// - `worktree_path`: that existing worktree;
 /// - `branch`: the worktree where it is already checked out, else a new worktree on it, taking the
-///   branch from the remote when it only exists there;
+///   branch from the remote when it only exists there, or creating it like a new branch when
+///   `create_missing_branch` says so;
 /// - `is_detached`: a new worktree with no branch, at the base;
 /// - nothing: the worktree where `new_branch` is already checked out, else a new worktree on it,
 ///   started from `origin/<base_branch>` freshly fetched, from the local base when there is no
@@ -268,29 +272,25 @@ pub fn prepare_workspace(request: &WorkspaceRequest) -> Result<Workspace, Worksp
             git(repo_path, &["worktree", "add", new_path, branch])?;
         } else {
             let _ = git(repo_path, &["fetch", "--quiet", "origin", branch]);
-            if !ref_exists(repo_path, &format!("refs/remotes/origin/{branch}")) {
+            if ref_exists(repo_path, &format!("refs/remotes/origin/{branch}")) {
+                let remote = format!("origin/{branch}");
+                git(
+                    repo_path,
+                    &["worktree", "add", "--track", "-b", branch, new_path, &remote],
+                )?;
+            } else if request.create_missing_branch {
+                let mut args = vec!["worktree", "add", "-b", branch, new_path];
+                let start_point = start_point(request);
+                args.extend(start_point.as_deref());
+                git(repo_path, &args)?;
+            } else {
                 return Err(WorkspaceError::BranchNotFound { branch: branch.clone() });
             }
-            let remote = format!("origin/{branch}");
-            git(
-                repo_path,
-                &["worktree", "add", "--track", "-b", branch, new_path, &remote],
-            )?;
         }
         return Ok(created(branch));
     }
 
-    let start_point = request.base_branch.as_ref().map(|base| {
-        // Offline, what origin held at the last fetch is still closer to it than a local branch
-        // nobody pulls.
-        if git(repo_path, &["fetch", "--quiet", "origin", base]).is_ok()
-            || ref_exists(repo_path, &format!("refs/remotes/origin/{base}"))
-        {
-            format!("origin/{base}")
-        } else {
-            base.clone()
-        }
-    });
+    let start_point = start_point(request);
     if request.is_detached {
         let mut args = vec!["worktree", "add", "--detach", new_path];
         args.extend(start_point.as_deref());
@@ -308,6 +308,22 @@ pub fn prepare_workspace(request: &WorkspaceRequest) -> Result<Workspace, Worksp
         git(repo_path, &args)?;
     }
     Ok(created(&request.new_branch))
+}
+
+/// Where a new branch starts: the base freshly fetched from origin, none for the branch checked out.
+fn start_point(request: &WorkspaceRequest) -> Option<String> {
+    let repo_path = request.repo_path.as_str();
+    request.base_branch.as_ref().map(|base| {
+        // Offline, what origin held at the last fetch is still closer to it than a local branch
+        // nobody pulls.
+        if git(repo_path, &["fetch", "--quiet", "origin", base]).is_ok()
+            || ref_exists(repo_path, &format!("refs/remotes/origin/{base}"))
+        {
+            format!("origin/{base}")
+        } else {
+            base.clone()
+        }
+    })
 }
 
 /// Removes a worktree created by `prepare_workspace` and no longer used, with its branch. Best
@@ -581,6 +597,44 @@ mod tests {
         })
         .expect_err("refusal");
         assert_eq!(error, WorkspaceError::BranchNotFound { branch: "ghost".into() });
+    }
+
+    #[test]
+    fn creates_a_missing_branch_from_the_base_freshly_fetched_when_asked() {
+        let (_dir, root, ahead) = repository_with_origin();
+        let workspace = prepare_workspace(&WorkspaceRequest {
+            branch: Some("feat/shared-name".into()),
+            create_missing_branch: true,
+            base_branch: Some("main".into()),
+            ..request(&root, "wt")
+        })
+        .expect("workspace");
+        assert_eq!(
+            (
+                workspace.branch.as_str(),
+                workspace.base_branch.as_str(),
+                workspace.is_created
+            ),
+            ("feat/shared-name", "main", true)
+        );
+        assert_eq!(head_commit(&workspace.path), Some(ahead));
+
+        // A branch that exists is still taken as it is, not started again from the base.
+        let (_dir, root, _) = repository_with_origin();
+        let workspace = prepare_workspace(&WorkspaceRequest {
+            branch: Some("fix/remote-only".into()),
+            create_missing_branch: true,
+            base_branch: Some("main".into()),
+            ..request(&root, "wt")
+        })
+        .expect("workspace");
+        assert_eq!(
+            run(
+                Path::new(&workspace.path),
+                &["rev-parse", "--abbrev-ref", "@{upstream}"]
+            ),
+            "origin/fix/remote-only"
+        );
     }
 
     #[test]
