@@ -198,7 +198,11 @@
           "type": "string"
         },
         "branch": {
-          "description": "Existing branch to work on, local or remote.",
+          "description": "Existing branch to work on, local or remote. With baseBranch, it is created from that base when it exists nowhere: for a name the master chose.",
+          "type": "string"
+        },
+        "baseBranch": {
+          "description": "Branch the work starts from, for example develop. Absent: the base of the project.",
           "type": "string"
         },
         "worktreePath": {

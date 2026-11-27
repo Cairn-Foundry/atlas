@@ -592,6 +592,10 @@ pub struct CreateAgentInput {
     /// Existing branch to work on, local or remote; absent means a new branch.
     #[serde(default)]
     pub branch: Option<String>,
+    /// Branch the work starts from, instead of the project's. With `branch`, that branch is
+    /// created from it when it exists nowhere.
+    #[serde(default)]
+    pub base_branch: Option<String>,
     /// Existing worktree to work in.
     #[serde(default)]
     pub worktree_path: Option<String>,
@@ -634,6 +638,7 @@ impl CreateAgentInput {
         let trimmed = |value: Option<String>| value.map(|text| text.trim().to_owned());
         self.reason = trimmed(self.reason);
         self.branch = trimmed(self.branch);
+        self.base_branch = trimmed(self.base_branch);
         self.worktree_path = trimmed(self.worktree_path);
         self.branch_type = trimmed(self.branch_type);
         self.branch_name = trimmed(self.branch_name);
@@ -645,6 +650,7 @@ impl CreateAgentInput {
         non_empty("repoPath", &self.repo_path);
         non_empty("reason", &self.reason);
         non_empty("branch", &self.branch);
+        non_empty("baseBranch", &self.base_branch);
         non_empty("worktreePath", &self.worktree_path);
         non_empty("branchName", &self.branch_name);
         non_empty("taskModel", &self.task_model);
